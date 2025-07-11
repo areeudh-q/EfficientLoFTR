@@ -20,11 +20,14 @@ if precision == 'mp':
 elif precision == 'fp16':
     _default_cfg['half'] = True
 
-print(_default_cfg)
+# print(_default_cfg)
 matcher = LoFTR(config=_default_cfg)
 
-matcher.load_state_dict(
-    torch.load("./weights/eloftr_outdoor.ckpt", map_location=torch.device('cpu'), weights_only=False)['state_dict'])
+if torch.cuda.is_available():
+    matcher.load_state_dict(torch.load("./weights/eloftr_outdoor.ckpt", weights_only=False)['state_dict'])
+else:
+    matcher.load_state_dict(torch.load("./weights/eloftr_outdoor.ckpt", map_location=torch.device('cpu'), weights_only=False)['state_dict'])
+
 matcher = reparameter(matcher)  # 如果不进行重新参数化，模型性能会下降
 
 if precision == 'fp16':
@@ -39,9 +42,9 @@ img0_pth = "./images/c1.jpg"
 img1_pth = "./images/c2.jpg"
 img0_raw = cv2.imread(img0_pth, cv2.IMREAD_GRAYSCALE)
 img1_raw = cv2.imread(img1_pth, cv2.IMREAD_GRAYSCALE)
-# 输入大小应该能被 32
-img0_raw = cv2.resize(img0_raw, (512, 512))
-img1_raw = cv2.resize(img1_raw, (512, 512))
+# 输入大小应能被 32 整除
+img0_raw = cv2.resize(img0_raw, (640, 480))
+img1_raw = cv2.resize(img1_raw, (640, 480))
 
 if precision == 'fp16':
     if torch.cuda.is_available():
@@ -69,8 +72,6 @@ dynamic_axes = {
 }
 
 print("Exporting LoFTR to ONNX...")
-
-print(img0[None].shape)
 
 torch.onnx.export(
     matcher,

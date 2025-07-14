@@ -38,7 +38,7 @@ class LoFTR(nn.Module):
         self.fine_preprocess = FinePreprocess(config)
         self.fine_matching = FineMatching(config)
 
-    def forward(self, data):
+    def forward(self, image0: torch.Tensor, image1: torch.Tensor, mask0: torch.Tensor = None, mask1: torch.Tensor = None):
         """ 
         Update:
             data (dict): {
@@ -48,6 +48,16 @@ class LoFTR(nn.Module):
                 'mask1'(optional) : (torch.Tensor): (N, H, W)
             }
         """
+        data = {
+            'image0': image0,
+            'image1': image1
+        }
+
+        if mask0 is not None:
+            data['mask0'] = mask0
+        if mask1 is not None:
+            data['mask1'] = mask1
+
         # 1. Local Feature CNN
         data.update({
             'bs': data['image0'].size(0),
@@ -116,6 +126,8 @@ class LoFTR(nn.Module):
 
         # 5. match fine-level            
         self.fine_matching(feat_f0_unfold, feat_f1_unfold, data)
+        # *** 添加这一行：返回 ONNX 模型所需的输出 ***
+        return data['mkpts0_f'], data['mkpts1_f'], data['mconf']  # <--- 在这里添加！
 
     def load_state_dict(self, state_dict, *args, **kwargs):
         for k in list(state_dict.keys()):

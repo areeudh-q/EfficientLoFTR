@@ -1,5 +1,9 @@
 # add export to onnx
 
+```shell
+python export_onnx.py
+```
+
 # Efficient LoFTR: Semi-Dense Local Feature Matching with Sparse-Like Speed
 
 ### [Project Page](https://zju3dv.github.io/efficientloftr) | [Paper](https://zju3dv.github.io/efficientloftr/files/EfficientLoFTR.pdf) 
